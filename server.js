@@ -7,9 +7,11 @@ export function startServer(port, origin) {
 
     app.use(async (req, res) => {
         const cacheKey = `${req.method}:${req.originalUrl}`;
-        const cache = readCache();
+        const isCacheable = req.method === 'GET';
 
-        if (cache[cacheKey]) {
+        if (isCacheable) {
+            const cache = readCache();
+            if (cache[cacheKey]) {
             console.log('Serving from cahe...');
             const cached = cache[cacheKey];
 
@@ -20,7 +22,10 @@ export function startServer(port, origin) {
             res.status(cached.status).send(cached.data);
 
             return;
+        }            
         }
+
+        
 
         const targetUrl = `${origin}${req.originalUrl}`;
         const headers = { ...req.headers };
@@ -41,7 +46,10 @@ export function startServer(port, origin) {
                 headers: response.headers,
                 data: response.data
             };
-            writeCache(cacheKey, responseData);
+
+            if (isCacheable){
+                writeCache(cacheKey, responseData);
+            }
             
             for (const [key, value] of Object.entries(response.headers)) {
                 res.set(key, value);
