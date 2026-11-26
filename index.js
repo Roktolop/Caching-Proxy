@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { startServer } from './server.js';
 import { Command } from 'commander';
-import { clearCache } from './cache.js';
+import { FileCache } from './cache/fileCache.js';
 
 const program = new Command();
 
@@ -15,13 +15,15 @@ program
     .requiredOption('--origin <url>', 'Origin server URL')
     .action((options) => {
         const { port, origin } = options;
-        startServer(port, origin);});
+        const cache = new FileCache('./cache.json'); // Create an instance of FileCache
+        startServer(port, origin, cache);});
 
 program
     .command('clear-cache')
-    .action(() => {
-        clearCache();
-       console.log('Cache cleared successfully.'); 
+    .action(async () => {
+        const cache = new FileCache('./cache.json');
+        await cache.clear();
+        console.log('Cache cleared successfully.');
     });
 
-program.parse();
+await program.parseAsync();
